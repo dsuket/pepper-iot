@@ -130,6 +130,7 @@
         ds.on("push", function(data) {
             model.$data.value = data.value.value;
             model.$data.timestamp = data.value.timestamp;
+            flowChart([data.value]);
         });
         ds.query().sort('desc').limit(5).done(function(data){
             model.$data.value = data[0].value;
