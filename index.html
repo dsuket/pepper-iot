@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Pepper Sample</title>
+    <style>
+        html, body {
+            margin:0; padding:0;
+        }
+        body {
+            font-size: 24px;
+        }
+        .main {
+            width: 960px;
+            margin: 0 auto;
+        }
+        .display-block {
+            display: inline;
+        }
+        .display-timestamp {
+            display: inline;
+            font-size: 12px;
+            margin-left: 2em;
+        }
+        .display-value {
+            display: inline;
+        }
+        .buttons {
+            display: inline;
+            margin: 0 2em;;
+        }
+        .btn {
+            display: inline-block;
+            padding: 6px 12px;
+            margin-bottom: 0;
+            font-size: 14px;
+            font-weight: 400;
+            line-height: 1.42857143;
+            text-align: center;
+            white-space: nowrap;
+            vertical-align: middle;
+            -ms-touch-action: manipulation;
+            touch-action: manipulation;
+            cursor: pointer;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+            background-image: none;
+            border: 1px solid rgba(0, 0, 0, 0);
+            border-radius: 4px;
+            color: #333;
+            background-color: #FFF;
+            border-color: #CCC;
+        }
+        .btn:hover {
+            color: #333;
+            background-color: #E6E6E6;
+            border-color: #ADADAD;
+        }
+    </style>
+</head>
+<body>
+
+<section class="main">
+    <h1>Hello Pepper x IoT</h1>
+    <div class="contents">
+        <div class="buttons">
+            <button class="btn plus-btn" v-on="click: plus">+1</button>
+            <button class="btn minus-btn" v-on="click: minus">-1</button>
+        </div>
+        <div class="display-block">
+            <div class="display-value" v-text="value"></div>
+            <div class="display-timestamp" v-text="timestamp | timestamp"></div>
+        </div>
+    </div>
+
+    <script src="http://cdnjs.cloudflare.com/ajax/libs/vue/0.11.5/vue.min.js"></script>
+    <script src="http://cdn.mlkcca.com/v0.2.8/milkcocoa.js"></script>
+    <script>
+        var milkcocoa = new MilkCocoa("https://io-di89tkgyc.mlkcca.com:443");
+
+        var ds = milkcocoa.dataStore("sample");
+        var now = typeof Date.now === 'undefined' ? function() {
+            return new Date().getTime();
+        } : Date.now;
+
+        Vue.filter('timestamp', function (value) {
+            return new Date(value).toString();
+        });
+
+        var model = new Vue({
+            el: '.contents',
+            data: {
+                value: 0,
+                timestamp: 0
+            },
+            methods: {
+                plus: function() {
+                    var val = this.$data.value + 1;
+                    ds.push({ value : val, timestamp: now() });
+                },
+                minus: function() {
+                    var val = this.$data.value - 1;
+                    ds.push({ value : val, timestamp: now() });
+                }
+            }
+        });
+        ds.on("push", function(data) {
+            model.$data.value = data.value.value;
+            model.$data.timestamp = data.value.timestamp;
+        });
+        ds.query().sort('desc').limit(1).done(function(data){
+            model.$data.value = data[0].value;
+            model.$data.timestamp = data[0].timestamp;
+        });
+
+        window.ds = ds;
+
+    </script>
+</section>
+
+</body>
+</html>
