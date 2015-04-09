@@ -3,6 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <title>Pepper Sample</title>
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/c3/0.4.10/c3.min.css"/>
     <style>
         html, body {
             margin:0; padding:0;
@@ -14,6 +16,9 @@
             width: 960px;
             margin: 0 auto;
         }
+        .contents {
+            margin: 2em 0;
+        }
         .display-block {
             display: inline;
         }
@@ -21,6 +26,8 @@
             display: inline;
             font-size: 12px;
             margin-left: 2em;
+        }
+        #chart {
         }
         .display-value {
             display: inline;
@@ -59,6 +66,7 @@
             border-color: #ADADAD;
         }
     </style>
+
 </head>
 <body>
 
@@ -75,10 +83,17 @@
         </div>
     </div>
 
-    <script src="http://cdnjs.cloudflare.com/ajax/libs/vue/0.11.5/vue.min.js"></script>
-    <script src="http://cdn.mlkcca.com/v0.2.8/milkcocoa.js"></script>
-    <script>
+    <div id="chart"></div>
+</section>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.5/d3.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/c3/0.4.10/c3.min.js"></script>
+<script src="http://cdnjs.cloudflare.com/ajax/libs/vue/0.11.5/vue.min.js"></script>
+<script src="http://cdn.mlkcca.com/v0.2.8/milkcocoa.js"></script>
+<script>
+    (function(){
         var milkcocoa = new MilkCocoa("https://io-di89tkgyc.mlkcca.com:443");
+        var model, chart;
 
         var ds = milkcocoa.dataStore("sample");
         var now = typeof Date.now === 'undefined' ? function() {
@@ -89,7 +104,15 @@
             return new Date(value).toString();
         });
 
-        var model = new Vue({
+        function pushData(value) {
+            var data = { value : value, timestamp: now() }
+            ds.push(data);
+//            model.$data.value = data.value;
+//            model.$data.timestamp = data.timestamp;
+            flowChart([data]);
+        }
+
+        model = new Vue({
             el: '.contents',
             data: {
                 value: 0,
@@ -97,12 +120,10 @@
             },
             methods: {
                 plus: function() {
-                    var val = this.$data.value + 1;
-                    ds.push({ value : val, timestamp: now() });
+                    pushData(this.$data.value + 1);
                 },
                 minus: function() {
-                    var val = this.$data.value - 1;
-                    ds.push({ value : val, timestamp: now() });
+                    pushData(this.$data.value - 1);
                 }
             }
         });
@@ -110,15 +131,50 @@
             model.$data.value = data.value.value;
             model.$data.timestamp = data.value.timestamp;
         });
-        ds.query().sort('desc').limit(1).done(function(data){
+        ds.query().sort('desc').limit(5).done(function(data){
             model.$data.value = data[0].value;
             model.$data.timestamp = data[0].timestamp;
+            flowChart(data);
         });
 
+        function flowChart(data) {
+            chart.flow({
+                json: data,
+                keys: {
+                    x: 'timestamp',
+                    value: ['value']
+                },
+                duration: 300,
+//                length: 3
+            });
+        }
+
+        chart = c3.generate({
+            data: {
+                json: [
+                    {value: 0, timestamp: 0},
+                    {value: 0, timestamp: 0},
+                    {value: 0, timestamp: 0},
+                    {value: 0, timestamp: 0},
+                    {value: 0, timestamp: 0}
+                ],
+                keys: {
+                    x: 'timestamp',
+                    value: ['value']
+                }
+            },
+            axis: {
+                x: {
+                    type: 'timeseries',
+                    tick: {
+                        format: '%H:%M:%S'
+                    }
+                }
+            }
+        });
         window.ds = ds;
 
-    </script>
-</section>
-
+    })();
+</script>
 </body>
 </html>
