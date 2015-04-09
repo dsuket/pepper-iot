@@ -106,9 +106,9 @@
 
         function pushData(value) {
             var data = { value : value, timestamp: now() }
-            ds.push(data);
-//            model.$data.value = data.value;
-//            model.$data.timestamp = data.timestamp;
+//            ds.push(data);
+            model.$data.value = data.value;
+            model.$data.timestamp = data.timestamp;
             flowChart([data]);
         }
 
@@ -169,6 +169,11 @@
                     type: 'timeseries',
                     tick: {
                         format: '%H:%M:%S'
+                    }
+                },
+                y: {
+                    tick: {
+                        format: d3.format('d')
                     }
                 }
             }
