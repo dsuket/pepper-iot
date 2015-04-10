@@ -106,10 +106,10 @@
 
         function pushData(value) {
             var data = { value : value, timestamp: now() }
-//            ds.push(data);
-            model.$data.value = data.value;
-            model.$data.timestamp = data.timestamp;
-            flowChart([data]);
+            ds.push(data);
+//            model.$data.value = data.value;
+//            model.$data.timestamp = data.timestamp;
+//            flowChart([data]);
         }
 
         model = new Vue({
@@ -146,7 +146,7 @@
                     value: ['value']
                 },
                 duration: 300,
-//                length: 3
+//                length: 0
             });
         }
 
