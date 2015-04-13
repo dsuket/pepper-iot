@@ -130,10 +130,14 @@
 
         function clear() {
             removeAll();
-            clearChart();
+            ds.send({msg: 'clear'});
+            clearData();
+        }
+        function clearData () {
             data.value = 0;
             data.timestamp = now();
             showData(data);
+            clearChart();
         }
         function removeAll() {
             ds.query().done(function(data) {
@@ -142,7 +146,6 @@
                 });
             });
         }
-
 
         function showData(d) {
             $displayValue.html(d.value);
@@ -162,6 +165,12 @@
             data.timestamp = d.value.timestamp;
             showData(data);
             flowChart(data);
+        });
+        ds.on('send', function(d) {
+            console.log(d);
+            if (d.value.msg === 'clear') {
+                clearData();
+            }
         });
 
         ds.query().sort('desc').limit(5).done(function(d){
