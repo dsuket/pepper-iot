@@ -74,91 +74,139 @@
     <h1>Hello Pepper x IoT</h1>
     <div class="contents">
         <div class="buttons">
-            <button class="btn plus-btn" v-on="click: plus">+1</button>
-            <button class="btn minus-btn" v-on="click: minus">-1</button>
+            <button class="btn" id="btn-plus">+1</button>
+            <button class="btn" id="btn-minus">-1</button>
+            <button class="btn" id="btn-clear">clear</button>
         </div>
         <div class="display-block">
-            <div class="display-value" v-text="value"></div>
-            <div class="display-timestamp" v-text="timestamp | timestamp"></div>
+            <div class="display-value" id="display-value"></div>
+            <div class="display-timestamp" id="display-timestamp"></div>
         </div>
     </div>
 
     <div id="chart"></div>
 </section>
 
+<script src="https://code.jquery.com/jquery-2.1.3.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.5/d3.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/c3/0.4.10/c3.min.js"></script>
-<script src="http://cdnjs.cloudflare.com/ajax/libs/vue/0.11.5/vue.min.js"></script>
+
+
 <script src="http://cdn.mlkcca.com/v0.2.8/milkcocoa.js"></script>
 <script>
     (function(){
         var milkcocoa = new MilkCocoa("https://io-di89tkgyc.mlkcca.com:443");
-        var model, chart;
+        var chart;
 
         var ds = milkcocoa.dataStore("sample");
         var now = typeof Date.now === 'undefined' ? function() {
             return new Date().getTime();
         } : Date.now;
 
-        Vue.filter('timestamp', function (value) {
-            return new Date(value).toString();
-        });
+        var data = {
+            value: 0,
+            timestamp: 0
+        };
+        var $displayValue = $('#display-value'),
+            $displayTImestamp = $('#display-timestamp');
+
 
         function pushData(value) {
-            var data = { value : value, timestamp: now() }
-            ds.push(data);
-//            model.$data.value = data.value;
-//            model.$data.timestamp = data.timestamp;
-//            flowChart([data]);
+            var d = { value : value, timestamp: now() };
+            ds.push(d);
         }
 
-        model = new Vue({
-            el: '.contents',
-            data: {
-                value: 0,
-                timestamp: 0
-            },
-            methods: {
-                plus: function() {
-                    pushData(this.$data.value + 1);
-                },
-                minus: function() {
-                    pushData(this.$data.value - 1);
-                }
-            }
-        });
-        ds.on("push", function(data) {
-            model.$data.value = data.value.value;
-            model.$data.timestamp = data.value.timestamp;
-            flowChart([data.value]);
-        });
-        ds.query().sort('desc').limit(5).done(function(data){
-            model.$data.value = data[0].value;
-            model.$data.timestamp = data[0].timestamp;
+        function plus() {
+            data.value += 1;
+            showData(data);
+            pushData(data.value);
+        }
+
+        function minus() {
+            data.value -= 1;
+            showData(data);
+            pushData(data.value);
+        }
+
+        function clear() {
+            removeAll();
+            clearChart();
+            data.value = 0;
+            data.timestamp = now();
+            showData(data);
+        }
+        function removeAll() {
+            ds.query().done(function(data) {
+                data.forEach(function(value) {
+                    ds.remove(value.id);
+                });
+            });
+        }
+
+
+        function showData(d) {
+            $displayValue.html(d.value);
+            $displayTImestamp.html(convertDate(d.timestamp));
+        }
+
+        function convertDate(time) {
+            return new Date(time).toString();
+        }
+
+        $('#btn-plus').on('click', plus);
+        $('#btn-minus').on('click', minus);
+        $('#btn-clear').on('click', clear);
+
+        ds.on("push", function(d) {
+            data.value = d.value.value;
+            data.timestamp = d.value.timestamp;
+            showData(data);
             flowChart(data);
         });
 
+        ds.query().sort('desc').limit(5).done(function(d){
+            data.value = d[0].value;
+            data.timestamp = d[0].timestamp;
+            showData(data);
+            flowChart(d);
+        });
+
+        var initialData = [
+            {value: 0, timestamp: 0},
+            {value: 0, timestamp: 0},
+            {value: 0, timestamp: 0},
+            {value: 0, timestamp: 0},
+            {value: 0, timestamp: 0}
+        ];
+
+        function clearChart() {
+            chart.load({
+                json: initialData,
+                keys: {
+                    x: 'timestamp',
+                    value: ['value']
+                }
+            });
+
+        }
+
         function flowChart(data) {
+            if (!(data instanceof Array)) {
+                data = [data];
+            }
             chart.flow({
                 json: data,
                 keys: {
                     x: 'timestamp',
                     value: ['value']
                 },
-                duration: 300,
-//                length: 0
+                duration: 300
             });
         }
 
         chart = c3.generate({
             data: {
-                json: [
-                    {value: 0, timestamp: 0},
-                    {value: 0, timestamp: 0},
-                    {value: 0, timestamp: 0},
-                    {value: 0, timestamp: 0},
-                    {value: 0, timestamp: 0}
-                ],
+                json: initialData,
                 keys: {
                     x: 'timestamp',
                     value: ['value']
