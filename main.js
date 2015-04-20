@@ -143,6 +143,9 @@
             format: d3.format('d')
           }
         }
+      },
+      point: {
+        r: 4
       }
     });
     return chart;
