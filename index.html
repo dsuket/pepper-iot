@@ -36,11 +36,22 @@
 <script src="main.js"></script>
 <script>
 (function(){
-    if (window.sensorModel) {
-        sensorModel.$watch('value', function(val) {
-            console.log('change value: ', val);
-        });
-    }
+
+  var threshold = 20;
+  var callback = function(val) {
+    // do somthing
+    console.log('change value: ', val);
+  };
+
+  if (window.sensorModel) {
+    var fired = false;
+    sensorModel.$watch('value', function(val) {
+      if (Number(val) < threshold && !fired) {
+        callback(val);
+        fired = true;
+      }
+    });
+  }
 })();
 </script>
 
